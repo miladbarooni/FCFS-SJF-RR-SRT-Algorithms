@@ -8,6 +8,7 @@ class Process :
         self.burst_time = burst_time
         self.io_time = io_time
         self.remaining_time = burst_time
+        self.start_time = -1
 
     def setStartTime(self, time):
         self.start_time = time
@@ -33,7 +34,7 @@ class CPU:
         self.all_proccess = all_process
         self.ready_queue = Queue(maxsize = len (all_process)) 
         self.waiting_queue = Queue(maxsize = len(all_process))
-        self.activ_list = []
+        # self.active_list = []
 
 
     def FCFS(self):
@@ -74,7 +75,7 @@ class CPU:
         self.cpu_utilization =  self.total_burst_time/self.time
         
         #print all CPU variables
-        print (self.average_response_time)
+        print (self.average_waiting_time)
         print (self.average_turnaround_time)
         print (self.average_response_time)
         print (self.throughput)
@@ -91,20 +92,17 @@ class CPU:
         sorted_on_burst_time = []
 
         while (len(sorted_on_arrival_time) != 0 or len(sorted_on_burst_time) != 0):
-            
-            for i in range(len(sorted_on_arrival_time)):
-                if (sorted_on_arrival_time[i].arrival_time <= self.time):
-                    sorted_on_burst_time.append(sorted_on_arrival_time[i])
-                    sorted_on_arrival_time.pop(i)
-                if (sorted_on_arrival_time[i].arrival_time > self.time):
-                    next_arrival_time = sorted_on_arrival_time[i].arrival_time
+            tmp = sorted_on_arrival_time[:]
+            for p in tmp:
+                if (p.arrival_time <= self.time):
+                    sorted_on_burst_time.append(p)
+                    sorted_on_arrival_time.remove(p)
+                if (p.arrival_time > self.time):
+                    next_arrival_time = p.arrival_time
                     break
             
             sorted_on_burst_time.sort(key = lambda c: c.burst_time, reverse= True)
-            for pi in sorted_on_burst_time:
-                print (self.time)
-                print (pi)
-            print ("+++++++++++++++")
+            
             if (len(sorted_on_burst_time) == 0):
                 self.time = next_arrival_time
                 continue
@@ -116,15 +114,16 @@ class CPU:
                 p.remaining_time = 0
                 self.total_burst_time = self.total_burst_time + p.burst_time
 
-        # print all process attributes
-        for process in self.all_proccess:
-            print (process)
-            print (process.start_time)
-            print (process.end_time)
-            print ("ResponseTime: " , process.getResponseTime())
-            print ("WatingTime: " , process.getWaittingTime())
-            print ("TurnAroundTime: " , process.getTurnaroundTime())
-            print ("==========================")
+        # # print all process attributes
+        # for process in self.all_proccme(selfss:
+        #     print (process)
+        #     print (process.start_timeme(self
+        #     print (process.end_time)
+        #     print ("ResponseTime: " ,me(selfprocess.getResponseTime())
+        #     print ("WatingTime: " , pme(selfocess.getWaittingTime())
+        #     print ("TurnAroundTime: " , process.getTurnaroundTime())
+        #     print ("==========================")
+
         # evaluate the CPU variables AWT, ATT, ART, Throughput, Utilization
         self.average_waiting_time = sum([x.getWaittingTime() for x in self.all_proccess]) / len(self.all_proccess)
         self.average_turnaround_time = sum([x.getTurnaroundTime() for x in self.all_proccess]) / len(self.all_proccess)
@@ -133,12 +132,141 @@ class CPU:
         self.cpu_utilization =  self.total_burst_time/self.time
 
         #print all CPU variables
-        print (self.average_response_time)
+        print (self.average_waiting_time)
         print (self.average_turnaround_time)
         print (self.average_response_time)
         print (self.throughput)
         print (self.cpu_utilization)
 
+    def RR(self):
+        sorted_on_arrival_time = Queue(maxsize=len(self.all_proccess))
+        #ititial time and burst_time 
+        self.time = 0
+        self.total_burst_time = 0
+        
+
+        sorted_on_arrival_time = self.all_proccess[:]
+        sorted_on_arrival_time.sort(key = lambda c: c.arrival_time, reverse= False)
+        
+        
+        while (not self.ready_queue.empty() or len(sorted_on_arrival_time)!=0):
+            
+            if (self.ready_queue.empty()):
+                p = sorted_on_arrival_time[0]
+                self.time = p.arrival_time
+                self.ready_queue.put(p)
+                sorted_on_arrival_time.remove(p)
+            
+                    
+                    
+            p = self.ready_queue.get()
+                
+            if (p.start_time == -1):
+                p.setStartTime(self.time)
+            if (p.remaining_time > 5):
+                self.time = self.time + 5
+                self.total_burst_time = self.total_burst_time + 5
+                p.remaining_time = p.remaining_time - 5
+            else:
+                self.time = self.time + p.remaining_time
+                self.total_burst_time = self.total_burst_time + p.remaining_time
+                p.remaining_time = 0
+                p.setEndTime(self.time)
+     
+            tmp = sorted_on_arrival_time[:]
+            for process in tmp:
+                if (process.arrival_time<=self.time):
+                    self.ready_queue.put(process)
+                    sorted_on_arrival_time.remove(process)
+            if(p.remaining_time != 0):
+                self.ready_queue.put(p)
+
+        # # print all process attributes
+        # for process in self.all_proccess:
+        #     print (process)
+        #     print (process.start_time)
+        #     print (process.end_time)
+        #     print ("ResponseTime: " ,process.getResponseTime())
+        #     print ("WatingTime: " , process.getWaittingTime())
+        #     print ("TurnAroundTime: " , process.getTurnaroundTime())
+        #     print ("==========================")
+
+        # evaluate the CPU variables AWT, ATT, ART, Throughput, Utilization
+        self.average_waiting_time = sum([x.getWaittingTime() for x in self.all_proccess]) / len(self.all_proccess)
+        self.average_turnaround_time = sum([x.getTurnaroundTime() for x in self.all_proccess]) / len(self.all_proccess)
+        self.average_response_time = sum([x.getResponseTime() for x in self.all_proccess]) / len(self.all_proccess)
+        self.throughput = len(self.all_proccess)/ self.time
+        self.cpu_utilization =  self.total_burst_time/self.time
+
+        #print all CPU variables
+        print (self.average_waiting_time)
+        print (self.average_turnaround_time)
+        print (self.average_response_time)
+        print (self.throughput)
+        print (self.cpu_utilization)
+
+    def SRT(self):
+        #ititial time and burst_time 
+        self.time = 0
+        self.total_burst_time = 0
+
+        sorted_on_arrival_time = self.all_proccess[:]
+        sorted_on_arrival_time.sort(key = lambda c: c.arrival_time, reverse= False)
+        
+        sorted_on_burst_time = []
+
+        while (len(sorted_on_arrival_time) != 0 or len(sorted_on_burst_time) != 0):
+            tmp = sorted_on_arrival_time[:]
+            for p in tmp:
+                if (p.arrival_time <= self.time):
+                    sorted_on_burst_time.append(p)
+                    sorted_on_arrival_time.remove(p)
+                if (p.arrival_time > self.time):
+                    next_arrival_time = p.arrival_time
+                    break
+            
+            sorted_on_burst_time.sort(key = lambda c: c.burst_time, reverse= True)
+            
+            if (len(sorted_on_burst_time) == 0):
+                self.time = next_arrival_time
+                continue
+                
+            else:
+                p = sorted_on_burst_time.pop()
+                if (p.start_time == -1):
+                    p.setStartTime(self.time)
+                self.time += 1
+                p.remaining_time -= 1
+                if (p.remaining_time == 0):
+                    p.setEndTime(self.time)
+                else:
+                    sorted_on_burst_time.append(p)
+                self.total_burst_time = self.total_burst_time + 1
+                
+
+        # print all process attributes
+        for process in self.all_proccess:
+            print (process)
+            print (process.start_time)
+            print (process.end_time)
+            print ("ResponseTime: " ,process.getResponseTime())
+            print ("WatingTime: " , process.getWaittingTime())
+            print ("TurnAroundTime: " , process.getTurnaroundTime())
+            print ("==========================")
+
+        # evaluate the CPU variables AWT, ATT, ART, Throughput, Utilization
+        self.average_waiting_time = sum([x.getWaittingTime() for x in self.all_proccess]) / len(self.all_proccess)
+        self.average_turnaround_time = sum([x.getTurnaroundTime() for x in self.all_proccess]) / len(self.all_proccess)
+        self.average_response_time = sum([x.getResponseTime() for x in self.all_proccess]) / len(self.all_proccess)
+        self.throughput = len(self.all_proccess)/ self.time
+        self.cpu_utilization =  self.total_burst_time/self.time
+
+        #print all CPU variables
+        print (self.average_waiting_time)
+        print (self.average_turnaround_time)
+        print (self.average_response_time)
+        print (self.throughput)
+        print (self.cpu_utilization)
 
 process = []
 number_of_process = int(input(""))
@@ -149,4 +277,6 @@ for i in range(number_of_process):
 
 cpu1 = CPU(process)
 # cpu1.FCFS()
-cpu1.SJF()
+# cpu1.SJF()
+# cpu1.RR()
+cpu1.SRT()
