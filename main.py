@@ -19,10 +19,6 @@ class Process :
     def burst_time(self):
         return self._burst_time
 
-    @property
-    def arrival_time(self):
-        return self._arrival_time
-
     def getRemainingTime(self):
         return self._remaining_time
 
