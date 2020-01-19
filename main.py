@@ -1,4 +1,5 @@
 from queue import Queue, PriorityQueue
+import threading
 
 class Process :
 
@@ -10,15 +11,20 @@ class Process :
         self._remaining_time = burst_time
         self._start_time = -1
 
-    @start_time.setter
+    @property
+    def arrival_time(self):
+        return self._arrival_time
+
+    @property
+    def burst_time(self):
+        return self._burst_time
+
     def setStartTime(self, time):
         self._start_time = time
 
-    @end_time.setter
     def setEndTime(self, time):
         self._end_time = time
 
-    @remaining_time.setter
     def setRemainingTime(self, time):
         self._remaining_time = time
 
@@ -53,17 +59,24 @@ class Process :
     def isFinished(self):
         return self._remaining_time == 0
 
+    def getID(self):
+        return self._id
+
+    def getIOTime(self):
+        return id
+
     def __str__(self):
         return 'id:{} arrival_time:{} burst_time:{} io_time:{}'.format(self.id, self.arrival_time, self.burst_time, self.io_time)
 
 class CPU: 
     
     def __init__(self, all_process):
-        self.all_proccess = all_process
+        self.all_proccess = []
         self.ready_queue = Queue(maxsize = len (all_process)) 
         self.waiting_queue = Queue(maxsize = len(all_process))
         # self.active_list = []
-
+        for p in all_process:
+            self.all_proccess.append(Process(p.getID(), p.getArrivalTime(), p.getBurstTime(), p.getIOTime()))
 
     def FCFS(self):
         #ititial time and burst_time 
@@ -75,7 +88,7 @@ class CPU:
         tmp.sort(key = lambda c: c.arrival_time, reverse = False)
         for process in tmp:
             self.ready_queue.put(process)
-        while not self.ready_queue.empty():
+        while not self.ready_queue.empty() or not self.waiting_queue.empty():
             p = self.ready_queue.get()
             if (p.getArrivalTime() > self.time):
                 self.time = p.getArrivalTime()
@@ -93,19 +106,19 @@ class CPU:
         self.cpu_utilization =  self.total_burst_time/self.time
         
         #print all CPU variables
-        print (self.average_waiting_time)
-        print (self.average_turnaround_time)
-        print (self.average_response_time)
-        print (self.throughput)
-        print (self.cpu_utilization)
+        print ("FCFS:")
+        print ("Avg. W.T.: ", self.average_waiting_time)
+        print ("Avg. T.T.: ", self.average_turnaround_time)
+        print ("Avg. R.T: ", self.average_response_time)
+        print ("Throughput: ", self.throughput)
+        print ("CPU Utilization: ", self.cpu_utilization)
 
     def SJF(self):
         #ititial time and burst_time 
         self.time = 0
         self.total_burst_time = 0
-
         sorted_on_arrival_time = self.all_proccess[:]
-        sorted_on_arrival_time.sort(key = lambda c: c.arrival_time, reverse= False)
+        sorted_on_arrival_time.sort(key = lambda c: c.arrival_time, reverse = False)
         
         sorted_on_burst_time = []
 
@@ -118,8 +131,8 @@ class CPU:
                 if (p.getArrivalTime() > self.time):
                     next_arrival_time = p.getArrivalTime()
                     break
-            
-            sorted_on_burst_time.sort(key = lambda c: c.burst_time, reverse= True)
+
+            sorted_on_burst_time.sort(key = lambda c: c.burst_time, reverse = True)
             
             if (len(sorted_on_burst_time) == 0):
                 self.time = next_arrival_time
@@ -142,11 +155,12 @@ class CPU:
         self.cpu_utilization =  self.total_burst_time/self.time
 
         #print all CPU variables
-        print (self.average_waiting_time)
-        print (self.average_turnaround_time)
-        print (self.average_response_time)
-        print (self.throughput)
-        print (self.cpu_utilization)
+        print ("SJF:")
+        print ("Avg. W.T.: ", self.average_waiting_time)
+        print ("Avg. T.T.: ", self.average_turnaround_time)
+        print ("Avg. R.T: ", self.average_response_time)
+        print ("Throughput: ", self.throughput)
+        print ("CPU Utilization: ", self.cpu_utilization)
 
     def RR(self):
         sorted_on_arrival_time = Queue(maxsize=len(self.all_proccess))
@@ -201,11 +215,12 @@ class CPU:
         self.cpu_utilization =  self.total_burst_time/self.time
 
         #print all CPU variables
-        print (self.average_waiting_time)
-        print (self.average_turnaround_time)
-        print (self.average_response_time)
-        print (self.throughput)
-        print (self.cpu_utilization)
+        print ("RR:")
+        print ("Avg. W.T.: ", self.average_waiting_time)
+        print ("Avg. T.T.: ", self.average_turnaround_time)
+        print ("Avg. R.T: ", self.average_response_time)
+        print ("Throughput: ", self.throughput)
+        print ("CPU Utilization: ", self.cpu_utilization)
 
     def SRT(self):
         #ititial time and burst_time 
@@ -228,7 +243,7 @@ class CPU:
                     break
             
             sorted_on_burst_time.sort(key = lambda c: c.burst_time, reverse= True)
-            
+
             if (len(sorted_on_burst_time) == 0):
                 self.time = next_arrival_time
                 continue
@@ -256,11 +271,12 @@ class CPU:
         self.cpu_utilization =  self.total_burst_time/self.time
 
         #print all CPU variables
-        print (self.average_waiting_time)
-        print (self.average_turnaround_time)
-        print (self.average_response_time)
-        print (self.throughput)
-        print (self.cpu_utilization)
+        print ("SRT:")
+        print ("Avg. W.T.: ", self.average_waiting_time)
+        print ("Avg. T.T.: ", self.average_turnaround_time)
+        print ("Avg. R.T: ", self.average_response_time)
+        print ("Throughput: ", self.throughput)
+        print ("CPU Utilization: ", self.cpu_utilization)
 
 def printAllProcess() :
     # print all process attributes
@@ -281,7 +297,16 @@ for i in range(number_of_process):
     process.append(Process(i+1,int (str_list[0]), int(str_list[1]), int(str_list[2])))
 
 cpu1 = CPU(process)
-# cpu1.FCFS()
-# cpu1.SJF()
-# cpu1.RR()
-cpu1.SRT()
+cpu2 = CPU(process)
+cpu3 = CPU(process)
+cpu4 = CPU(process)
+
+FCFS = threading.Thread(cpu1.FCFS())
+SJF = threading.Thread(cpu2.SJF())
+RR = threading.Thread(cpu3.RR())
+SRT = threading.Thread(cpu4.SRT())
+
+FCFS.start()
+SJF.start()
+RR.start()
+SRT.start()
