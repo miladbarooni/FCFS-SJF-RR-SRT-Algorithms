@@ -18,7 +18,7 @@ class Process :
     def setEndTime(self, time):
         self._end_time = time
 
-    @remaininf_time.setter
+    @remaining_time.setter
     def setRemainingTime(self, time):
         self._remaining_time = time
 
