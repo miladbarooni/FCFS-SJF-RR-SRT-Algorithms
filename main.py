@@ -19,20 +19,12 @@ class Process :
     def burst_time(self):
         return self._burst_time
 
-    def setStartTime(self, time):
-        self._start_time = time
-
-    def setEndTime(self, time):
-        self._end_time = time
-
-    def setRemainingTime(self, time):
-        self._remaining_time = time
-
-    def getBurstTime(self):
-        return self._burst_time
-
-    def getArrivalTime(self):
+    @property
+    def arrival_time(self):
         return self._arrival_time
+
+    def getRemainingTime(self):
+        return self._remaining_time
 
     def getTurnaroundTime(self):
         return self._end_time - self._arrival_time
@@ -42,12 +34,6 @@ class Process :
 
     def getResponseTime(self):
         return self._start_time - self._arrival_time
-
-    def getStartTime(self):
-        return self._start_time
-
-    def getRemainingTime(self):
-        return self._remaining_time
 
     def run(self, time, sec):
         new_time = time
@@ -66,9 +52,7 @@ class Process :
     def getID(self):
         return self._id
 
-    def getIOTime(self):
-        return id
-
+    
     def __str__(self):
         return 'id:{} arrival_time:{} burst_time:{} io_time:{}'.format(self.id, self.arrival_time, self.burst_time, self.io_time)
 
@@ -81,7 +65,7 @@ class CPU:
         self.waiting_queue = Queue(maxsize = len(all_process))
         # self.active_list = []
         for p in all_process:
-            self.all_proccess.append(Process(p.getID(), p.getArrivalTime(), p.getBurstTime(), p.getIOTime()))
+            self.all_proccess.append(Process(p.getID(), p.arrival_time, p.burst_time, p.getIOTime()))
 
     def FCFS(self):
         #ititial time and burst_time 
@@ -95,13 +79,13 @@ class CPU:
             self.ready_queue.put(process)
         while not self.ready_queue.empty() or not self.waiting_queue.empty():
             p = self.ready_queue.get()
-            if (p.getArrivalTime() > self.time):
-                self.time = p.getArrivalTime()
+            if (p.arrival_time > self.time):
+                self.time = p.arrival_time
             running_frame = [p.getID(), self.time]
-            self.time = p.run(self.time, p.getBurstTime())
+            self.time = p.run(self.time, p.burst_time)
             running_frame.append(self.time)
             self._running_sequence.append(running_frame)
-            self.total_burst_time += p.getBurstTime()
+            self.total_burst_time += p.burst_time
 
         # evaluate the CPU variables AWT, ATT, ART, Throughput, Utilization
         self.average_waiting_time = sum([x.getWaittingTime() for x in self.all_proccess]) / len(self.all_proccess)
@@ -130,11 +114,11 @@ class CPU:
         while (len(sorted_on_arrival_time) != 0 or len(sorted_on_burst_time) != 0):
             tmp = sorted_on_arrival_time[:]
             for p in tmp:
-                if (p.getArrivalTime() <= self.time):
+                if (p.arrival_time <= self.time):
                     sorted_on_burst_time.append(p)
                     sorted_on_arrival_time.remove(p)
-                if (p.getArrivalTime() > self.time):
-                    next_arrival_time = p.getArrivalTime()
+                if (p.arrival_time > self.time):
+                    next_arrival_time = p.arrival_time
                     break
 
             sorted_on_burst_time.sort(key = lambda c: c.burst_time, reverse = True)
@@ -145,11 +129,10 @@ class CPU:
             else:
                 p = sorted_on_burst_time.pop()
                 runnig_frame = [p.getID(), self.time]
-                self.time = p.run(self.time, p.getBurstTime())
+                self.time = p.run(self.time, p.burst_time)
                 runnig_frame.append(self.time)
                 self._running_sequence.append(runnig_frame)
-                p.setRemainingTime(0)
-                self.total_burst_time += p.getBurstTime()
+                self.total_burst_time += p.burst_time
 
         #printAllProcess()
 
@@ -183,7 +166,7 @@ class CPU:
             
             if (self.ready_queue.empty()):
                 p = sorted_on_arrival_time[0]
-                self.time = p.getArrivalTime()
+                self.time = p.arrival_time
                 self.ready_queue.put(p)
                 sorted_on_arrival_time.remove(p)
             
@@ -242,11 +225,11 @@ class CPU:
         while (len(sorted_on_arrival_time) != 0 or len(sorted_on_burst_time) != 0):
             tmp = sorted_on_arrival_time[:]
             for p in tmp:
-                if (p.getArrivalTime() <= self.time):
+                if (p.arrival_time <= self.time):
                     sorted_on_burst_time.append(p)
                     sorted_on_arrival_time.remove(p)
-                if (p.getArrivalTime() > self.time):
-                    next_arrival_time = p.getArrivalTime()
+                if (p.arrival_time > self.time):
+                    next_arrival_time = p.arrival_time
                     break
             
             sorted_on_burst_time.sort(key = lambda c: c.burst_time, reverse= True)
