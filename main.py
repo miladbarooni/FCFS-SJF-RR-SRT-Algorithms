@@ -50,11 +50,15 @@ class Process :
         return self._remaining_time
 
     def run(self, time, sec):
-        self._remaining_time -= sec
+        new_time = time
+        if (self._remaining_time > 0):
+            self._remaining_time -= sec
+            new_time += sec
         if(self._start_time == -1):
             self._start_time = time
         if(self._remaining_time == 0):
-            self._end_time = time + sec
+            self._end_time = new_time
+        return new_time
 
     def isFinished(self):
         return self._remaining_time == 0
@@ -71,6 +75,7 @@ class Process :
 class CPU: 
     
     def __init__(self, all_process):
+        self._running_sequence = []
         self.all_proccess = []
         self.ready_queue = Queue(maxsize = len (all_process)) 
         self.waiting_queue = Queue(maxsize = len(all_process))
@@ -92,10 +97,10 @@ class CPU:
             p = self.ready_queue.get()
             if (p.getArrivalTime() > self.time):
                 self.time = p.getArrivalTime()
-            p.setStartTime(self.time)
-            self.time += p.getBurstTime()
-            p.setEndTime(self.time)
-            p.setRemainingTime(0)
+            running_frame = [p.getID(), self.time]
+            self.time = p.run(self.time, p.getBurstTime())
+            running_frame.append(self.time)
+            self._running_sequence.append(running_frame)
             self.total_burst_time += p.getBurstTime()
 
         # evaluate the CPU variables AWT, ATT, ART, Throughput, Utilization
@@ -139,9 +144,10 @@ class CPU:
                 continue
             else:
                 p = sorted_on_burst_time.pop()
-                p.setStartTime(self.time)
-                self.time += p.getBurstTime()
-                p.setEndTime(self.time)
+                runnig_frame = [p.getID(), self.time]
+                self.time = p.run(self.time, p.getBurstTime())
+                runnig_frame.append(self.time)
+                self._running_sequence.append(runnig_frame)
                 p.setRemainingTime(0)
                 self.total_burst_time += p.getBurstTime()
 
@@ -185,17 +191,18 @@ class CPU:
                     
             p = self.ready_queue.get()
                 
-            if (p.getStartTime() == -1):
-                p.setStartTime(self.time)
             if (p.getRemainingTime() > 5):
-                self.time = self.time + 5
+                running_frame = [p.getID(), self.time]
+                self.time = p.run(self.time, 5)
+                running_frame.append(self.time)
+                self._running_sequence.append(running_frame)
                 self.total_burst_time = self.total_burst_time + 5
-                p.setRemainingTime(p.getRemainingTime() - 5)
             else:
-                self.time += p.getRemainingTime()
+                running_frame = [p.getID(), self.time]
+                self.time = p.run(self.time, p.getRemainingTime())
+                running_frame.append(self.time)
+                self._running_sequence.append(running_frame)
                 self.total_burst_time += p.getRemainingTime()
-                p.setRemainingTime(0)
-                p.setEndTime(self.time)
      
             tmp = sorted_on_arrival_time[:]
             for process in tmp:
@@ -246,17 +253,18 @@ class CPU:
 
             if (len(sorted_on_burst_time) == 0):
                 self.time = next_arrival_time
-                continue
-                
+                continue    
             else:
                 p = sorted_on_burst_time.pop()
-                if (p.getStartTime() == -1):
-                    p.setStartTime(self.time)
-                self.time += 1
-                p.setRemainingTime(p.getRemainingTime() - 1)
-                if (p.isFinished()):
-                    p.setEndTime(self.time)
+                running_frame = [p.getID(), self.time]
+                self.time = p.run(self.time, 1)
+                running_frame.append(self.time)
+                if (len(self._running_sequence) == 0 or self._running_sequence[-1][0] != running_frame[0]):
+                    self._running_sequence.append(running_frame)
                 else:
+                    self._running_sequence[-1][2] = running_frame[2]
+
+                if (not p.isFinished()):
                     sorted_on_burst_time.append(p)
                 self.total_burst_time += 1
                 
@@ -278,16 +286,21 @@ class CPU:
         print ("Throughput: ", self.throughput)
         print ("CPU Utilization: ", self.cpu_utilization)
 
-def printAllProcess() :
-    # print all process attributes
-    for process in self.all_proccess:
-        print (process)
-        print (process.start_time)
-        print (process.end_time)
-        print ("ResponseTime: " , process.getResponseTime())
-        print ("WatingTime: " , process.getWaittingTime())
-        print ("TurnAroundTime: " , process.getTurnaroundTime())
-        print ("==========================")
+    def printAllProcess(self) :
+        # print all process attributes
+        for process in self.all_proccess:
+            print (process)
+            print (process.start_time)
+            print (process.end_time)
+            print ("ResponseTime: " , process.getResponseTime())
+            print ("WatingTime: " , process.getWaittingTime())
+            print ("TurnAroundTime: " , process.getTurnaroundTime())
+            print ("==========================")
+    
+    def getRunningSequence(self):
+        return self._running_sequence
+
+
 
 process = []
 number_of_process = int(input(""))
@@ -310,3 +323,8 @@ FCFS.start()
 SJF.start()
 RR.start()
 SRT.start()
+
+print("FCFS: ", cpu1.getRunningSequence())
+print("SJF: ", cpu2.getRunningSequence())
+print("RR: ", cpu3.getRunningSequence())
+print("SRT: ", cpu4.getRunningSequence())
