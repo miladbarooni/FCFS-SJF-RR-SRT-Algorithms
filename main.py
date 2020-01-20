@@ -1,5 +1,6 @@
 from queue import Queue, PriorityQueue
 import threading
+import csv
 
 class Process :
 
@@ -279,6 +280,17 @@ class CPU:
     def getRunningSequence(self):
         return self._running_sequence
 
+#reading from csvFile
+
+# 1 if it is csv, 0 if it is text
+csv_of_text = 1
+if (csv_of_text == 1):
+    with open('Process1.csv') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+        print (row)
+        # print(f'Processed {line_count} lines.')
 
 
 process = []
@@ -307,3 +319,5 @@ print("FCFS: ", cpu1.getRunningSequence())
 print("SJF: ", cpu2.getRunningSequence())
 print("RR: ", cpu3.getRunningSequence())
 print("SRT: ", cpu4.getRunningSequence())
+
+
